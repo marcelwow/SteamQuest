@@ -13,24 +13,29 @@ import Reviews from './pages/Reviews';
 import GameLists from './pages/GameLists';
 import Notifications from './pages/Notifications';
 
+// Context
+import { AuthProvider } from './context/AuthContext';
+
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <Navbar />
-        <Container className="mt-4">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/achievements" element={<Achievements />} />
-            <Route path="/quests" element={<Quests />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/lists" element={<GameLists />} />
-            <Route path="/notifications" element={<Notifications />} />
-          </Routes>
-        </Container>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Navbar />
+          <Container className="mt-4">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/achievements" element={<Achievements />} />
+              <Route path="/quests" element={<Quests />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/lists" element={<GameLists />} />
+              <Route path="/notifications" element={<Notifications />} />
+            </Routes>
+          </Container>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

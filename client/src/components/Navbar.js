@@ -1,14 +1,20 @@
 import React from 'react';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button, Image } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSteam } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const NavigationBar = () => {
   const navigate = useNavigate();
-  const isAuthenticated = false; // This will be replaced with actual auth state
+  const { user, logout } = useAuth();
 
   const handleSteamLogin = () => {
     window.location.href = 'http://localhost:5000/auth/steam';
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
   return (
@@ -27,16 +33,26 @@ const NavigationBar = () => {
             <Nav.Link as={Link} to="/lists">Game Lists</Nav.Link>
           </Nav>
           <Nav>
-            {isAuthenticated ? (
-              <>
-                <Nav.Link as={Link} to="/notifications">
+            {user ? (
+              <div className="d-flex align-items-center">
+                <Nav.Link as={Link} to="/notifications" className="me-3">
                   <i className="fas fa-bell"></i>
                 </Nav.Link>
-                <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
-                <Button variant="outline-light" onClick={() => navigate('/auth/logout')}>
+                <div className="d-flex align-items-center me-3">
+                  {user.avatar && (
+                    <Image
+                      src={user.avatar}
+                      alt={user.username}
+                      roundedCircle
+                      style={{ width: '32px', height: '32px', marginRight: '8px' }}
+                    />
+                  )}
+                  <span className="text-light">{user.username}</span>
+                </div>
+                <Button variant="outline-light" onClick={handleLogout}>
                   Logout
                 </Button>
-              </>
+              </div>
             ) : (
               <Button variant="outline-light" onClick={handleSteamLogin}>
                 <FaSteam className="me-2" />

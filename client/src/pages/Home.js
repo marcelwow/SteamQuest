@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { FaTrophy, FaList, FaComment, FaBell } from 'react-icons/fa';
+import { FaTrophy, FaList, FaBell } from 'react-icons/fa';
 
 const Home = () => {
   const features = [
@@ -16,12 +16,6 @@ const Home = () => {
       title: 'Game Lists',
       description: 'Create and manage your game lists, organize your library.',
       link: '/lists'
-    },
-    {
-      icon: <FaComment size={40} />,
-      title: 'Reviews & Comments',
-      description: 'Share your thoughts about games and read others\' reviews.',
-      link: '/reviews'
     },
     {
       icon: <FaBell size={40} />,
@@ -44,7 +38,7 @@ const Home = () => {
 
       <Row className="g-4">
         {features.map((feature, index) => (
-          <Col key={index} md={6} lg={3}>
+          <Col key={index} md={6} lg={4}>
             <Card className="h-100 text-center">
               <Card.Body>
                 <div className="mb-3 text-primary">
@@ -63,23 +57,6 @@ const Home = () => {
             </Card>
           </Col>
         ))}
-      </Row>
-
-      <Row className="mt-5 text-center">
-        <Col>
-          <h2>Ready to Start Your Quest?</h2>
-          <p className="lead mb-4">
-            Join our community of gamers and start tracking your achievements today!
-          </p>
-          <Button
-            as={Link}
-            to="/auth/steam"
-            variant="primary"
-            size="lg"
-          >
-            Login with Steam
-          </Button>
-        </Col>
       </Row>
     </Container>
   );

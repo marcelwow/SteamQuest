@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const fetch = require('node-fetch');
 const { passport, isAuthenticated } = require('./middleware/auth');
 
 // Validate required environment variables
@@ -88,12 +89,61 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to SteamQuest API' });
 });
 
-// SPECJALNE ENDPOINTY MUSZĄ BYĆ PRZED /:id !!!
-app.get('/steam-promotions', async (req, res) => { /* ... */ });
-app.get('/wishlist/promotions', isAuthenticated, async (req, res) => { /* ... */ });
+// API routes
+app.get('/api/steam/promotions', async (req, res) => {
+    try {
+        const response = await fetch('https://store.steampowered.com/api/featuredcategories');
+        const data = await response.json();
+        
+        // Transform the data into the expected format
+        const promotions = [];
+        
+        // Add specials
+        if (data.specials && data.specials.items) {
+            promotions.push(...data.specials.items
+                .filter(item => item.discount_percent > 0) // Filter out items with 0% discount
+                .map(item => ({
+                    appId: item.id,
+                    name: item.name,
+                    image: item.large_capsule_image,
+                    discountPercent: item.discount_percent,
+                    finalPrice: (item.final_price / 100).toFixed(2)
+                })));
+        }
+        
+        // Add top sellers
+        if (data.top_sellers && data.top_sellers.items) {
+            promotions.push(...data.top_sellers.items
+                .filter(item => item.discount_percent > 0) // Filter out items with 0% discount
+                .map(item => ({
+                    appId: item.id,
+                    name: item.name,
+                    image: item.large_capsule_image,
+                    discountPercent: item.discount_percent,
+                    finalPrice: (item.final_price / 100).toFixed(2)
+                })));
+        }
+        
+        res.json(promotions);
+    } catch (error) {
+        console.error('Error fetching Steam promotions:', error);
+        res.status(500).json({ message: 'Error fetching Steam promotions' });
+    }
+});
 
-// Get game by ID
-app.get('/:id', async (req, res) => {
+app.get('/api/steam/wishlist/promotions', isAuthenticated, async (req, res) => {
+    try {
+        const response = await fetch('https://store.steampowered.com/api/featuredcategories');
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching wishlist promotions:', error);
+        res.status(500).json({ message: 'Error fetching wishlist promotions' });
+    }
+});
+
+// Get game by ID - this should be the last route
+app.get('/api/games/:id', async (req, res) => {
     // Implementation of the endpoint
 });
 

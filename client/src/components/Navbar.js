@@ -14,7 +14,7 @@ const NavigationBar = () => {
 
   useEffect(() => {
     if (user) {
-      axios.get('http://localhost:5000/api/games/steam-promotions')
+      axios.get('http://localhost:5000/api/steam/promotions')
         .then(res => setPromoGames(res.data))
         .catch(() => setPromoGames([]));
     }

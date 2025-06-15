@@ -12,6 +12,8 @@ import Quests from './pages/Quests';
 import Reviews from './pages/Reviews';
 import GameLists from './pages/GameLists';
 import Notifications from './pages/Notifications';
+import Admin from './pages/Admin';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
@@ -31,6 +33,8 @@ function App() {
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/lists" element={<GameLists />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
             </Routes>
           </Container>
         </div>

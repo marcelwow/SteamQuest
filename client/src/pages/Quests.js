@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, ProgressBar, Badge } from 'react-bootstrap';
 import axios from 'axios';
 import { FaTrophy, FaGamepad, FaComment, FaStar } from 'react-icons/fa';
+import { differenceInSeconds, formatDuration, intervalToDuration } from 'date-fns';
 
 const Quests = () => {
     const [quests, setQuests] = useState([]);
     const [userQuests, setUserQuests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [leaderboard, setLeaderboard] = useState([]);
+    const [progressMessage, setProgressMessage] = useState('');
 
     useEffect(() => {
         fetchQuests();
@@ -48,6 +50,25 @@ const Quests = () => {
         }
     };
 
+    const handleAssignQuest = async (questId) => {
+        try {
+            await axios.post(`http://localhost:5000/api/quests/${questId}/assign`);
+            fetchQuests();
+        } catch (error) {
+            console.error('Error assigning quest:', error);
+        }
+    };
+
+    const handleCheckProgress = async (questId) => {
+        try {
+            const response = await axios.post(`http://localhost:5000/api/quests/${questId}/check-progress`);
+            setProgressMessage(response.data.message);
+            fetchQuests();
+        } catch (error) {
+            setProgressMessage('Error checking progress');
+        }
+    };
+
     const getQuestIcon = (type) => {
         switch (type) {
             case 'achievement':
@@ -59,6 +80,24 @@ const Quests = () => {
             default:
                 return <FaStar />;
         }
+    };
+
+    // Filtruj dostępne questy, by nie pokazywać tych już przypisanych użytkownikowi
+    const userQuestIds = new Set(userQuests.map(q => q._id));
+    const availableQuests = quests.filter(q => !userQuestIds.has(q._id));
+
+    // Podziel userQuests na aktywne i ukończone
+    const activeUserQuests = userQuests.filter(q => q.status === 'active');
+    const completedUserQuests = userQuests.filter(q => q.status === 'completed');
+
+    // Funkcja do wyświetlania odliczania czasu do końca questa
+    const getTimeLeft = (expiresAt) => {
+        if (!expiresAt) return '-';
+        const now = new Date();
+        const end = new Date(expiresAt);
+        if (end < now) return 'Expired';
+        const duration = intervalToDuration({ start: now, end });
+        return formatDuration(duration, { format: ['days', 'hours', 'minutes', 'seconds'] });
     };
 
     if (loading) {
@@ -76,27 +115,39 @@ const Quests = () => {
                     <h1 className="mb-4">Quests</h1>
                     
                     <h3 className="mb-3">Your Active Quests</h3>
+                    {progressMessage && <div className="alert alert-info">{progressMessage}</div>}
                     <Row className="g-4 mb-5">
-                        {userQuests.map(quest => (
-                            <Col key={quest._id} md={6}>
+                        {activeUserQuests.map(quest => (
+                            <Col key={quest.quest?._id || quest._id} md={6}>
                                 <Card className="h-100">
                                     <Card.Body>
-                                        <div className="d-flex align-items-center mb-3">
-                                            <div className="me-3 text-primary">
-                                                {getQuestIcon(quest.type)}
-                                            </div>
-                                            <div>
-                                                <Card.Title>{quest.title}</Card.Title>
-                                                <Badge bg="primary">{quest.points} points</Badge>
-                                            </div>
-                                        </div>
-                                        <Card.Text>{quest.description}</Card.Text>
+                                        <Card.Title>{quest.quest?.questTitle || quest.questTitle}</Card.Title>
+                                        <div className="mb-2"><b>Game:</b> {quest.quest?.requirements?.gameName || quest.requirements?.gameName || '-'}</div>
+                                        <div className="mb-2"><b>Required Minutes:</b> {quest.quest?.requirements?.requiredMinutes || quest.requirements?.requiredMinutes || '-'}</div>
+                                        <div className="mb-2"><b>Duration:</b> {quest.quest?.duration || quest.duration || '-'}</div>
+                                        <div className="mb-2"><b>Expires in:</b> {getTimeLeft(quest.quest?.expiresAt || quest.expiresAt)}</div>
                                         <Button
-                                            variant="success"
-                                            onClick={() => handleCompleteQuest(quest._id)}
+                                            variant="warning"
+                                            onClick={() => handleCheckProgress(quest.quest?._id || quest._id)}
                                         >
-                                            Complete Quest
+                                            Check progress
                                         </Button>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                    <h3 className="mb-3">Completed Quests</h3>
+                    <Row className="g-4 mb-5">
+                        {completedUserQuests.map(quest => (
+                            <Col key={quest.quest?._id || quest._id} md={6}>
+                                <Card className="h-100 bg-success bg-opacity-10">
+                                    <Card.Body>
+                                        <Card.Title>{quest.quest?.questTitle || quest.questTitle}</Card.Title>
+                                        <div className="mb-2"><b>Game:</b> {quest.quest?.requirements?.gameName || quest.requirements?.gameName || '-'}</div>
+                                        <div className="mb-2"><b>Required Minutes:</b> {quest.quest?.requirements?.requiredMinutes || quest.requirements?.requiredMinutes || '-'}</div>
+                                        <div className="mb-2"><b>Duration:</b> {quest.quest?.duration || quest.duration || '-'}</div>
+                                        <div className="mb-2"><b>Completed at:</b> {quest.completedAt ? new Date(quest.completedAt).toLocaleString() : '-'}</div>
                                     </Card.Body>
                                 </Card>
                             </Col>
@@ -105,24 +156,21 @@ const Quests = () => {
 
                     <h3 className="mb-3">Available Quests</h3>
                     <Row className="g-4">
-                        {quests.map(quest => (
+                        {availableQuests.map(quest => (
                             <Col key={quest._id} md={6}>
                                 <Card className="h-100">
                                     <Card.Body>
-                                        <div className="d-flex align-items-center mb-3">
-                                            <div className="me-3 text-primary">
-                                                {getQuestIcon(quest.type)}
-                                            </div>
-                                            <div>
-                                                <Card.Title>{quest.title}</Card.Title>
-                                                <Badge bg="primary">{quest.points} points</Badge>
-                                            </div>
-                                        </div>
-                                        <Card.Text>{quest.description}</Card.Text>
-                                        <ProgressBar
-                                            now={(quest.completedBy.length / 100) * 100}
-                                            label={`${quest.completedBy.length} completed`}
-                                        />
+                                        <Card.Title>{quest.questTitle}</Card.Title>
+                                        <div className="mb-2"><b>Game:</b> {quest.requirements?.gameName || '-'}</div>
+                                        <div className="mb-2"><b>Required Minutes:</b> {quest.requirements?.requiredMinutes || '-'}</div>
+                                        <div className="mb-2"><b>Duration:</b> {quest.duration || '-'}</div>
+                                        <div className="mb-2"><b>Expires in:</b> {getTimeLeft(quest.expiresAt)}</div>
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => handleAssignQuest(quest._id)}
+                                        >
+                                            Aktywuj questa
+                                        </Button>
                                     </Card.Body>
                                 </Card>
                             </Col>

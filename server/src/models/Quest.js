@@ -1,33 +1,29 @@
 const mongoose = require('mongoose');
 
 const questSchema = new mongoose.Schema({
-    title: {
+    questTitle: {
         type: String,
-        required: true
-    },
-    description: {
-        type: String,
-        required: true
-    },
-    type: {
-        type: String,
-        enum: ['achievement', 'game', 'review', 'custom'],
-        required: true
-    },
-    points: {
-        type: Number,
         required: true
     },
     requirements: {
-        gameId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Game'
+        steamAppId: {
+            type: String,
+            required: true
         },
-        achievementCount: Number,
-        reviewCount: Number,
-        customRequirement: String
+        gameName: {
+            type: String,
+            required: true
+        },
+        requiredMinutes: {
+            type: Number,
+            required: true
+        }
     },
-    deadline: Date,
+    duration: {
+        type: String,
+        enum: ['daily', 'weekly', 'monthly'],
+        required: true
+    },
     isCompleted: {
         type: Boolean,
         default: false
@@ -41,7 +37,11 @@ const questSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
-    }]
+    }],
+    expiresAt: {
+        type: Date,
+        required: true
+    }
 }, {
     timestamps: true
 });

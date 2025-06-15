@@ -18,8 +18,21 @@ const userSchema = new mongoose.Schema({
         default: 0
     },
     quests: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Quest'
+        quest: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Quest',
+            required: true
+        },
+        startMinutes: {
+            type: Number,
+            required: true
+        },
+        status: {
+            type: String,
+            enum: ['active', 'completed'],
+            default: 'active'
+        },
+        completedAt: Date
     }],
     gameLists: [{
         name: String,

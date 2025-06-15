@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const { passport } = require('./middleware/auth');
+const { passport, isAuthenticated } = require('./middleware/auth');
 
 // Validate required environment variables
 const requiredEnvVars = ['STEAM_API_KEY', 'MONGODB_URI'];
@@ -86,6 +86,15 @@ app.use('/api/reviews', reviewsRoutes);
 // Base route
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to SteamQuest API' });
+});
+
+// SPECJALNE ENDPOINTY MUSZĄ BYĆ PRZED /:id !!!
+app.get('/steam-promotions', async (req, res) => { /* ... */ });
+app.get('/wishlist/promotions', isAuthenticated, async (req, res) => { /* ... */ });
+
+// Get game by ID
+app.get('/:id', async (req, res) => {
+    // Implementation of the endpoint
 });
 
 // Error handling middleware

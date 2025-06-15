@@ -265,4 +265,71 @@ router.get('/steam/owned', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get 5 random Steam promotions
+router.get('/steam-promotions', async (req, res) => {
+    try {
+        const axios = require('axios');
+        // Pobierz listę bestsellerów/promocji z API Steama
+        const resp = await axios.get('https://store.steampowered.com/api/featuredcategories/?cc=pl&l=pl', {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        // Wybierz gry z promocjami (np. specials)
+        const specials = resp.data.specials.items.filter(item => item.discount_percent > 0);
+        // Wylosuj 5 gier
+        const shuffled = specials.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 5).map(game => ({
+            appId: game.id,
+            name: game.name,
+            discountPercent: game.discount_percent,
+            finalPrice: game.final_price / 100,
+            originalPrice: game.original_price / 100,
+            image: game.header_image
+        }));
+        res.json(selected);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get Steam wishlist and check for promotions
+router.get('/wishlist/promotions', isAuthenticated, async (req, res) => {
+    try {
+        const steamId = req.user.steamId;
+        const axios = require('axios');
+        // Pobierz wishlistę
+        const wishlistUrl = `https://store.steampowered.com/wishlist/profiles/${steamId}/wishlistdata/`;
+        const wishlistResp = await axios.get(wishlistUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        const wishlist = wishlistResp.data;
+        const results = [];
+        // Dla każdej gry pobierz szczegóły i sprawdź promocję
+        for (const appId of Object.keys(wishlist)) {
+            try {
+                const detailsResp = await axios.get(`https://store.steampowered.com/api/appdetails?appids=${appId}&cc=pl&l=pl`);
+                const details = detailsResp.data[appId]?.data;
+                const priceInfo = details?.price_overview;
+                results.push({
+                    appId,
+                    name: details?.name || wishlist[appId].name,
+                    isOnSale: priceInfo ? priceInfo.discount_percent > 0 : false,
+                    discountPercent: priceInfo ? priceInfo.discount_percent : 0,
+                    finalPrice: priceInfo ? priceInfo.final / 100 : null,
+                    originalPrice: priceInfo ? priceInfo.initial / 100 : null,
+                    image: details?.header_image || null
+                });
+            } catch (err) {
+                // Pomijaj błędy pojedynczych gier
+            }
+        }
+        res.json(results);
+    } catch (error) {
+        console.error('Błąd pobierania wishlisty:', error.response?.status, error.response?.data);
+        if (error.response && error.response.status === 403) {
+            return res.status(403).json({ message: 'Your Steam wishlist is private or not accessible.' });
+        }
+        res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router; 
